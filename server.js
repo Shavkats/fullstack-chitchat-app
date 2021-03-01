@@ -6,12 +6,13 @@ const cors = require('cors')
 const passport = require('passport')
 const users = require('./routes/users')
 const posts = require('./routes/posts')
+const path = require('path');
 
 // Setup environment
 dotenv.config()
 
 //Connect to database
-mongoose.connect(process.env.MONGODB_URL, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGODB_URI || process.env.MONGODB_URL, { useNewUrlParser: true, useUnifiedTopology: true })
 .then(() => console.log('MongoDB connected'))
 .catch(err => console.log(err));
 
@@ -31,6 +32,14 @@ require('./config/passport')(passport)
 //Routes
 app.use('/api/users', users)
 app.use('/api/posts', posts)
+
+// Heroku setup
+if(process.env.NODE_ENV === 'production'){
+    app.use(express.static('client/build'));
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, 'client', 'build', 'index.html')); //relative path
+    });
+}
 
 //Start app
 const PORT = process.env.PORT || 5000
